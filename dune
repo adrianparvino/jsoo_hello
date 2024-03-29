@@ -1,0 +1,9 @@
+(env
+  (dev
+    (js_of_ocaml 
+     (flags (--target-env browser))
+     (build_runtime_flags (--target-env browser))
+     (link_flags ())))
+  (release
+    (js_of_ocaml 
+     (flags (--enable es6 --opt=3 --target-env browser --no-sourcemap)))))

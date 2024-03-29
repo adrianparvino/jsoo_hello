@@ -1,0 +1,5 @@
+name = "kitter"
+workers_dev = true
+compatibility_date = "2024-03-28"
+main = "./_build/default/bin/main.js"
+

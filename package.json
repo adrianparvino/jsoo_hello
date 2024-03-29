@@ -1,0 +1,10 @@
+{
+  "private": true,
+  "name": "{{ project-name }}",
+  "version": "0.1.0",
+  "description": "Reason hello world for Cloudflare Workers",
+  "main": "src/Demo.bs.js",
+  "keywords": ["BuckleScript"],
+  "author": "{{ authors }}",
+  "license": "MIT"
+}
