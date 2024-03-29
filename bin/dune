@@ -1,5 +1,5 @@
 (executable
  (name main)
  (modes js)
- (libraries jsoo_hello)
- (preprocess (pps js_of_ocaml-ppx)))
+ (libraries jsoo_hello hex)
+ (preprocess (pps js_of_ocaml-ppx ppx_jsobject_conv ppx_deriving.show)))

@@ -3,3 +3,6 @@ workers_dev = true
 compatibility_date = "2024-03-28"
 main = "./_build/default/bin/main.js"
 
+[vars]
+DISCORD_PUBLIC_KEY = "2f63866235fe7970896386ddf448e3593e0fb0ae35dfeb12c83ed26dd17251db"
+DISCORD_APPLICATION_ID = "1199503211803979907"

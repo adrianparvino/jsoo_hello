@@ -1,13 +1,12 @@
-type request = Http_request.t
-
 module type Handler = sig
+  open Js_of_ocaml
   module Response: sig 
     type t
 
-    val render: t -> string
+    val render: t -> Js.js_string Js.t
   end
 
-  val handle: request -> Response.t
+  val handle: Headers.t -> Http_request.t -> Response.t Promise.t
 end
 
 module Make : functor (_: Handler) -> sig

@@ -1,48 +1,42 @@
 open Js_of_ocaml
 
-type request = Http_request.t
-
 module type Handler = sig
   module Response : sig
     type t
 
-    val render : t -> string
+    val render : t -> Js.js_string Js.t
   end
 
-  val handle : request -> Response.t
+  val handle : Headers.t -> Http_request.t -> Response.t Promise.t
 end
 
-module Promise : sig
-  type 'a t
+module Response = struct
+  type t
 
-  val resolve : 'a -> 'a t Js.t
-  val map : resolve:('a -> 'b) -> 'a t Js.t -> 'b t Js.t
-end = struct
-  type 'a t
-
-  let promise = Js.Unsafe.global##._Promise
-  let resolve x = promise##resolve x
-
-  let map ~resolve p =
-    Js.Unsafe.meth_call p "then" [| Js.Unsafe.inject resolve |]
+  let create body : t Js.t =
+    let c : (Js.js_string Js.t -> _ Js.t -> t Js.t) Js.constr =
+      Js.Unsafe.global ##. Response
+    in
+    let headers = Headers.(empty () |> set "content-type" "application/json") in
+    new%js c
+      body
+      (object%js
+         val headers = headers
+      end)
 end
 
 module Make (Handler : Handler) = struct
-  type response
-
   class type workers_request = object
     method _method : Js.js_string Js.t Js.readonly_prop
-    method text : Js.js_string Js.t Promise.t Js.t Js.meth
-    method json : 'a Js.t Promise.t Js.t Js.meth
+    method headers : Headers.t Js.readonly_prop
+    method text : Js.js_string Js.t Promise.t Js.meth
+    method json : 'a Js.t Promise.t Js.meth
   end
 
   class type event = object
     method request : workers_request Js.t Js.readonly_prop
-    method respondWith : response Js.t Promise.t Js.t -> unit Js.meth
+    method respondWith : Response.t Js.t Promise.t -> unit Js.meth
   end
-
-  let response : (string -> response Js.t) Js.constr =
-    Js.Unsafe.global ##. Response
 
   let addEventListener (e : string) (cb : event Js.t -> unit) : unit =
     Js.Unsafe.fun_call
@@ -53,19 +47,23 @@ module Make (Handler : Handler) = struct
     ignore
       (addEventListener "fetch" (fun (e : event Js.t) ->
            let request = e##.request in
+           let headers = request##.headers in
            let pr =
+             let open Promise.Bind in
              match Js.to_bytestring request##._method with
-             | "GET" -> Promise.resolve (Handler.handle Http_request.Get)
+             | "HEAD" -> Handler.handle headers Http_request.Head
+             | "GET" -> Handler.handle headers Http_request.Get
              | "POST" ->
-                 let promise = request##json in
-                 promise
-                 |> Promise.map ~resolve:(fun _ ->
-                        Handler.handle Http_request.Get)
+                 let* body = request##text in
+                 Handler.handle headers (Http_request.Post body)
+             | "PUT" ->
+                 let* body = request##text in
+                 Handler.handle headers (Http_request.Put body)
              | _ -> failwith "method not supported"
            in
 
            e##respondWith
              (pr
-             |> Promise.map ~resolve:(fun x ->
-                    new%js response (Handler.Response.render x)))))
+             |> Promise.map (fun r ->
+                    r |> Handler.Response.render |> Response.create))))
 end

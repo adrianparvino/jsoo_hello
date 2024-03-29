@@ -19,7 +19,7 @@
  (name jsoo_hello)
  (synopsis "A short synopsis")
  (description "A longer description")
- (depends ocaml dune)
+ (depends ocaml dune hex ppx_jsobject_conv ppx_deriving)
  (tags
   (topics "to describe" your project)))
 
