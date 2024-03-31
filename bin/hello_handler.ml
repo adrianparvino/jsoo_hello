@@ -26,14 +26,10 @@ module Response = struct
     in
 
     response
-  (* Firebug.console##debug (Js.to_bytestring response); *)
-  (* Js.to_bytestring response *)
 end
 
-class type encodeIntoResult = object
-  method read : int Js.prop
-  method written : int Js.prop
-end
+type encodeIntoResult = { read : int; written : int }
+[@@deriving show, jsobject]
 
 class type textencoder = object
   method encode : Js.js_string Js.t -> Typed_array.uint8Array Js.t Js.meth
@@ -44,12 +40,36 @@ class type textencoder = object
     encodeIntoResult Js.t Js.meth
 end
 
+let lut =
+  Array.init 256 (fun x ->
+      let x = Char.chr x in
+      match x with
+      | '0' -> 0
+      | '1' -> 1
+      | '2' -> 2
+      | '3' -> 3
+      | '4' -> 4
+      | '5' -> 5
+      | '6' -> 6
+      | '7' -> 7
+      | '8' -> 8
+      | '9' -> 9
+      | 'a' -> 10
+      | 'b' -> 11
+      | 'c' -> 12
+      | 'd' -> 13
+      | 'e' -> 14
+      | 'f' -> 15
+      | _ -> 0)
+
 let from_hex hex : Typed_array.uint8Array Js.t =
-  let s = Hex.to_string (`Hex hex) in
-  let arr =
-    Js.array (Array.init (String.length s) (fun i -> String.get_int8 s i))
-  in
-  new%js Typed_array.uint8Array_fromArray arr
+  let buffer = new%js Typed_array.uint8Array (String.length hex / 2) in
+  for i = 0 to buffer##.byteLength - 1 do
+    let hi = String.get_int8 hex (2 * i) in
+    let lo = String.get_int8 hex ((2 * i) + 1) in
+    Js.array_set (Js.Unsafe.coerce buffer) i ((16 * lut.(hi)) + lut.(lo))
+  done;
+  buffer
 
 let verify signature signature_timestamp pubkey body : bool Js.t Promise.t =
   let open Promise.Bind in
@@ -70,9 +90,18 @@ let verify signature signature_timestamp pubkey body : bool Js.t Promise.t =
       (Js.array [| Js.bytestring "verify" |])
   in
   let signature = from_hex signature in
-  let data =
-    encoder##encode ((Js.bytestring signature_timestamp)##concat body)
+  let buffer = new%js Typed_array.uint8Array 65536 in
+  let { written } =
+    encoder##encodeInto (Js.bytestring signature_timestamp) buffer
+    |> encodeIntoResult_of_jsobject |> Result.get_ok
   in
+  let length = written in
+  let { written } =
+    encoder##encodeInto body (buffer##subarray_toEnd length)
+    |> encodeIntoResult_of_jsobject |> Result.get_ok
+  in
+  let length = length + written in
+  let data = buffer##subarray 0 length in
   crypto##.subtle##verify algorithm key signature data
 
 type interaction_data = { t : int; [@jsobject.key "type"] name : string }
