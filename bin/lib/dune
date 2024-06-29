@@ -1,0 +1,4 @@
+(library
+ (name jsoo_hello)
+ (modes melange)
+ (preprocess (pps melange.ppx)))

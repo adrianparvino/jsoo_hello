@@ -11,24 +11,11 @@ doc: "https://url/to/documentation"
 bug-reports: "https://github.com/username/reponame/issues"
 depends: [
   "ocaml"
+  "melange" {>= "3.0.0"}
   "dune" {>= "3.13"}
   "hex"
   "ppx_jsobject_conv"
   "ppx_deriving"
   "odoc" {with-doc}
-]
-build: [
-  ["dune" "subst"] {dev}
-  [
-    "dune"
-    "build"
-    "-p"
-    name
-    "-j"
-    jobs
-    "@install"
-    "@runtest" {with-test}
-    "@doc" {with-doc}
-  ]
 ]
 dev-repo: "git+https://github.com/username/reponame.git"

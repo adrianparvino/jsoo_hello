@@ -1,3 +1,3 @@
-open Jsoo_hello.Workers.Make (Hello_handler)
-
-let _ = run ()
+let default =
+  let open Jsoo_hello.Workers.Make (Discord.Make (Hello_handler)) in
+  [%mel.obj { fetch = (fun x y z -> handle x y z) }]

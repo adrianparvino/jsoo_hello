@@ -1,5 +1,6 @@
-(executable
- (name main)
- (modes js)
- (libraries jsoo_hello hex)
- (preprocess (pps js_of_ocaml-ppx ppx_jsobject_conv ppx_deriving.show)))
+(melange.emit
+ (target node)
+ (libraries jsoo_hello)
+ (modules main hello_handler discord hex)
+ (module_systems es6)
+ (preprocess (pps melange.ppx)))

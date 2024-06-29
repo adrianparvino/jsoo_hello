@@ -1,8 +1,8 @@
 (lang dune 3.13)
 
-(name jsoo_hello)
+(using melange 0.1)
 
-(generate_opam_files true)
+(name jsoo_hello)
 
 (source
  (github username/reponame))
@@ -16,10 +16,10 @@
 (documentation https://url/to/documentation)
 
 (package
+ (allow_empty)
  (name jsoo_hello)
  (synopsis "A short synopsis")
  (description "A longer description")
- (depends ocaml dune hex ppx_jsobject_conv ppx_deriving)
  (tags
   (topics "to describe" your project)))
 
